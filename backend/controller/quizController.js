@@ -24,7 +24,7 @@ Generate a unique quiz question about sustainable living practices. Focus on dif
           { id: "D", text: "Generate the option" }
     
     ],
-  "answer": "Correct Option Letter (A/B/C/D)",
+  "correctAnswer": "Correct Option Letter (A/B/C/D)",
   "points" : "give 10 points to each correct answer",
   "explanation": "A brief explanation of why the correct answer is the best choice for sustainable living."
 }
