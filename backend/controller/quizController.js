@@ -17,12 +17,13 @@ export const generateQuiz = async (req, res) => {
 Generate a unique quiz question about sustainable living practices. Focus on different areas like energy conservation, waste management, sustainable shopping, water conservation, or eco-friendly transportation. The question should be concise and educational, with 4 multiple choice options. Format the response strictly as:
 {
   "question": "Your question here",
-  "options": {
-    "A": "Option A",
-    "B": "Option B",
-    "C": "Option C",
-    "D": "Option D"
-  },
+  "options": [
+    { id: "A", text: "Generate the option" }
+      { id: "B", text: "Generate the option" }
+        { id: "C", text: "Generate the option" }
+          { id: "D", text: "Generate the option" }
+    
+    ],
   "answer": "Correct Option Letter (A/B/C/D)",
   "points" : "give 10 points to each correct answer",
   "explanation": "A brief explanation of why the correct answer is the best choice for sustainable living."

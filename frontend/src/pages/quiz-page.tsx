@@ -22,7 +22,7 @@ interface Question {
   question: string;
   options: { id: string; text: string }[];
   correctAnswer: string;
-  points: number;
+  points: string;
   explanation: string;
 }
 import { Button } from "@/components/ui/button";
@@ -40,82 +40,29 @@ export default function QuizPage() {
   const [showResults, setShowResults] = useState(false);
   const [points, setPoints] = useState(0);
   const [answered, setAnswered] = useState(false);
-  const [questions , setQuestions] = useState<Question[]>( []);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     const getData = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/api/v1/users/quiz",{});
-        console.log(response.data);
-        setQuestions(response.data);
+        setLoading(true);
+        const response = await axios.get("http://localhost:3000/api/v1/users/quiz", {});
+        console.log(response.data.questions);
+        setQuestions(response.data.questions.map((q: any) => ({
+          ...q,
+          points: parseInt(q.points)
+        })));
+        
       } catch (error) {
-        console.error("Error fetching quiz data:", error);``
+        console.error("Error fetching quiz data:", error);
+      } finally {
+        setLoading(false);
       }
     }
     getData();
-  },[])
-  // const questions = [
-  //   {
-  //     id: 1,
-  //     question:
-  //       "Which of the following contributes most to greenhouse gas emissions globally?",
-  //     options: [
-  //       { id: "a", text: "Transportation" },
-  //       { id: "b", text: "Electricity production" },
-  //       { id: "c", text: "Agriculture" },
-  //       { id: "d", text: "Residential heating" },
-  //     ],
-  //     correctAnswer: "b",
-  //     points: 10,
-  //     explanation:
-  //       "Electricity production is the largest source of greenhouse gas emissions globally, primarily due to the burning of fossil fuels like coal and natural gas.",
-  //   },
-  //   {
-  //     id: 2,
-  //     question:
-  //       "Which renewable energy source has seen the largest growth in the past decade?",
-  //     options: [
-  //       { id: "a", text: "Wind energy" },
-  //       { id: "b", text: "Solar energy" },
-  //       { id: "c", text: "Hydroelectric power" },
-  //       { id: "d", text: "Geothermal energy" },
-  //     ],
-  //     correctAnswer: "b",
-  //     points: 15,
-  //     explanation:
-  //       "Solar energy has experienced the most rapid growth globally in the past decade, with dramatic decreases in cost and increases in efficiency.",
-  //   },
-  //   {
-  //     id: 3,
-  //     question:
-  //       "What is the most effective individual action to reduce carbon footprint?",
-  //     options: [
-  //       { id: "a", text: "Using public transportation" },
-  //       { id: "b", text: "Eating less meat" },
-  //       { id: "c", text: "Reducing air travel" },
-  //       { id: "d", text: "Using renewable energy" },
-  //     ],
-  //     correctAnswer: "c",
-  //     points: 20,
-  //     explanation:
-  //       "While all options help, reducing air travel has the single largest impact on an individual's carbon footprint due to the high emissions from aviation.",
-  //   },
-  //   {
-  //     id: 4,
-  //     question: "Which ecosystem is considered the 'lungs of the Earth'?",
-  //     options: [
-  //       { id: "a", text: "Amazon Rainforest" },
-  //       { id: "b", text: "Coral Reefs" },
-  //       { id: "c", text: "Arctic Tundra" },
-  //       { id: "d", text: "Phytoplankton in oceans" },
-  //     ],
-  //     correctAnswer: "d",
-  //     points: 25,
-  //     explanation:
-  //       "While the Amazon is often called the 'lungs of the Earth', marine phytoplankton actually produce 50-85% of the world's oxygen through photosynthesis.",
-  //   },
-  // ];
+  }, []);
 
- 
   const handleAnswerSelect = (answerId: string) => {
     setSelectedAnswers({ ...selectedAnswers, [currentQuestion]: answerId });
   };
@@ -126,7 +73,7 @@ export default function QuizPage() {
     if (
       selectedAnswers[currentQuestion] === currentQuestionData.correctAnswer
     ) {
-      setPoints(points + currentQuestionData.points);
+      setPoints(points + parseInt(currentQuestionData.points));
     }
     setAnswered(true);
   };
@@ -148,13 +95,20 @@ export default function QuizPage() {
     setAnswered(false);
   };
 
-  const currentQuestionData = questions[currentQuestion];
-  const totalPoints = questions.reduce((sum, q) => sum + q.points, 0);
-  const progress =
-    ((currentQuestion + (answered ? 1 : 0)) / questions.length) * 100;
+  // Calculate total points only if questions array is not empty
+  const totalPoints = questions.length > 0 
+    ? questions.reduce((sum, q) => sum + parseInt(q.points), 0) 
+    : 0;
+
+  // Calculate progress only if questions array is not empty
+  const progress = questions.length > 0
+    ? ((currentQuestion + (answered ? 1 : 0)) / questions.length) * 100
+    : 0;
 
   // Calculate score percentage for results
-  const scorePercentage = Math.round((points / totalPoints) * 100);
+  const scorePercentage = totalPoints > 0 
+    ? Math.round((points / totalPoints) * 100)
+    : 0;
 
   // Function to determine badge and message based on score
   const getResultFeedback = () => {
@@ -184,6 +138,46 @@ export default function QuizPage() {
         "bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400",
     };
   };
+
+  // Show loading state while fetching data
+  if (loading) {
+    return (
+      <div className="w-full min-h-screen bg-background py-12 px-4 sm:px-6 flex items-center justify-center">
+        <div className="text-center">
+          <Leaf className="h-10 w-10 text-emerald-500 mx-auto animate-pulse" />
+          <p className="mt-4 text-muted-foreground">Loading quiz questions...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error message if no questions are loaded
+  if (questions.length === 0) {
+    return (
+      <div className="w-full min-h-screen bg-background py-12 px-4 sm:px-6">
+        <div className="max-w-3xl mx-auto">
+          <Card className="w-full shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-xl text-center">Quiz Unavailable</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-center text-muted-foreground">
+                Unable to load quiz questions. Please try again later.
+              </p>
+            </CardContent>
+            <CardFooter className="flex justify-center">
+              <Button onClick={() => window.location.reload()}>
+                <RotateCcw className="mr-2 h-4 w-4" /> Try Again
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Get current question data safely
+  const currentQuestionData = questions[currentQuestion];
 
   return (
     <div className="w-full min-h-screen bg-background py-12 px-4 sm:px-6">
